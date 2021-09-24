@@ -71,7 +71,7 @@ class Environment:
     Each thing has a .location slot, even though some environments may not
     need this."""
 
-    def __init__(self, width=25, height=25):
+    def __init__(self, width=5, height=5):
         self.things = []
         self.agents = []
         self.width = width
