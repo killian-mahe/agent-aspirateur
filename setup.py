@@ -7,6 +7,7 @@ setup(name='Hoover Agent',
       author_email='killian.mahe1@uqac.ca',
       packages=[
           'pretty-tables',
-          'colorama'
+          'colorama',
+          'numpy',
       ]
 )
