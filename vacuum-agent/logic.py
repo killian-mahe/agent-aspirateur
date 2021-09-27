@@ -1,6 +1,6 @@
 import heapq
 import math
-
+from Collections import deque
 """
 ------------------------
 -      PRIMITIVES      -
@@ -107,6 +107,20 @@ class PriorityQueue:
 
     def __len__(self):
         return len(self.elements)
+    
+class Stack:
+    
+    def __init__(self):
+        self.stack = []
+    
+    def add(self,element):
+        self.stack.append(element)
+        
+    def pop(self):
+        return self.stack.pop()
+    
+    def isEmpty():
+        return self.stack == []
 
 
 """
@@ -115,6 +129,23 @@ class PriorityQueue:
 ________________________
 """
 
+def dfs(problem):
+    """Depth First Search"""
+    init_node = Node(problem.initial)
+    frontier = Stack()
+    frontier.append(init_node)
+    searched_nodes = {hash(problem.initial): init_node}  # {hash(state):node}
+    while frontier:
+        current_node = frontier.pop()
+        if problem.goal_test(current_node):
+            return current_node
+        for child in Node.expand(problem, current_node):
+            result_state = child.state
+            hashed_state = hash(result_state)
+            if hashed_state not in searched_nodes:
+                searched_nodes[hashed_state] = child
+                frontier.add(child)
+    return Node("FAILED", cost=math.inf)
 
 def bfs(problem, func):
     """Best first (graph) search"""
