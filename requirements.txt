@@ -1,2 +1,0 @@
-numpy~=1.21.2
-pretty-tables~=1.3.0
