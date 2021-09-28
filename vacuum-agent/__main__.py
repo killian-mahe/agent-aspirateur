@@ -1,7 +1,7 @@
 from threading import Thread
 import sys
 
-from agent import Environment, Dirt, Jewel, Position
+from environment import Environment, Dirt, Jewel, Position
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 from PyQt5.QtCore import QThread, QRectF, Qt, QPointF
@@ -107,10 +107,3 @@ app = QApplication(sys.argv)
 win = Window()
 win.show()
 sys.exit(app.exec())
-
-# environment = Environment()
-# agent = Agent()
-# environment.agent = agent
-#
-# env_thread = Thread(environment.run())
-# env_thread.run()
