@@ -21,23 +21,23 @@ class State(object):
 
 
 class Problem(object):
-    def __init__(self, initial: State = None, goal: State = None):
+    def __init__(self, initial=None, goal=None):
         self.goal = goal
         self.initial = initial
 
-    def actions(self, state: State):
+    def actions(self, state):
         raise NotImplementedError
 
-    def result(self, state: State, action) -> State:
+    def result(self, state, action):
         raise NotImplementedError
 
-    def goal_test(self, state: State):
+    def goal_test(self, state):
         return state == self.goal
 
-    def cost(self, current_state: State, action, future_state):
+    def cost(self, current_state, action, future_state):
         return 1
 
-    def heuristic(self, state: State, action):
+    def heuristic(self, state, action):
         return 0
 
     def __str__(self):

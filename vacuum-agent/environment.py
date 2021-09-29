@@ -93,8 +93,7 @@ class Environment(State, QObject):
         else:
             raise NotImplementedError
 
-    def percept(self, agent):
-        """Return the percept that the agent sees at this point."""
+    def map(self, agent):
         sensor_map = []
         for y in range(0, self.y_max):
             for x in range(0, self.x_max):
@@ -115,9 +114,27 @@ class Environment(State, QObject):
             if isinstance(thing, Dirt):
                 return thing.position.x, thing.position.y
 
-    def execute_action(self, agent, action):
-        """Change the world to reflect this action. (Implement this.)"""
-        raise NotImplementedError
+    def percept(self, agent):
+        """Return the percept that the agent sees at this point."""
+        return self
+
+    def execute_action(self, action):
+        """Change the world to reflect this action."""
+        if not isinstance(action, str):
+            raise NotImplementedError
+
+        if action == "Left":
+            self.agent.position.x -= 1
+        elif action == "Right":
+            self.agent.position.x += 1
+        elif action == "Up":
+            self.agent.position.y += 1
+        elif action == "Down":
+            self.agent.position.y -= 1
+        elif action == "Grab":
+            self.delete_thing_at(self.agent.position, Jewel)
+        elif action == "Suck":
+            self.delete_thing_at(self.agent.position, [Dirt, Jewel])
 
     def random_location(self):
         x = randint(0, self.x_max - 1)
@@ -141,12 +158,15 @@ class Environment(State, QObject):
             self.thing_deleted.emit(deleted_thing)
             self.things.remove(deleted_thing)
 
-    def delete_thing_at(self, position, thing_class=Dirt):
-        things = self.something_at(position, thing_class)
-        if things:
-            self.delete_thing(things[0])
-        else:
-            raise RuntimeError
+    def delete_thing_at(self, position, things_class: Thing = Dirt):
+        if not isinstance(things_class, list):
+            things_class = [things_class]
+        for thing_class in things_class:
+            things = self.something_at(position, thing_class)
+            if things:
+                self.delete_thing(things[0])
+            else:
+                raise RuntimeError
 
     def generate_jewel(self):
         position = self.random_location()
@@ -182,7 +202,7 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         return False
 
     def update_state(self, state, percept):
-        return deepcopy(state)
+        return deepcopy(percept)
 
     def formulate_goal(self, state):
         state = deepcopy(state)
