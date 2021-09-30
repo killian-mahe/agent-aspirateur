@@ -1,11 +1,13 @@
-from threading import Thread
+from time import sleep
 import sys
 
-from environment import Environment, Dirt, Jewel, Position
+from environment import Environment, Dirt, Jewel, Position, VacuumAgent, SCREEN
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 from PyQt5.QtCore import QThread, QRectF, Qt, QPointF
-from PyQt5.QtGui import QBrush, QPolygonF
+from PyQt5.QtGui import QBrush, QPolygonF, QPen
+
+sys.setrecursionlimit(10000)
 
 
 class EnvironmentThread(QThread):
@@ -20,12 +22,23 @@ class EnvironmentThread(QThread):
 
 class AgentThread(QThread):
 
+    def __init__(self, agent, environment):
+        QThread.__init__(self)
+        self.environment = environment
+        self.agent = agent
+
     def run(self):
-        pass
+        while self.agent.alive:
+            seq = self.agent(self.environment.percept())
+            if seq:
+                print(seq)
+                for action in seq:
+                    self.environment.execute_action(action)
+            sleep(0.01)
 
 
 def convert_position(position: Position):
-    return Position(100*position.x + 50, 100*position.y + 50)
+    return Position(100 * position.x + 50, 100 * position.y + 50)
 
 
 class Window(QMainWindow):
@@ -37,24 +50,42 @@ class Window(QMainWindow):
         self.view = QGraphicsView(self.scene)
 
         self.environment = Environment()
-        self.environment.thing_spawn.connect(self.spawn_handler)
-        self.environment.thing_deleted.connect(self.deleted_thing_handler)
+        self.agent = VacuumAgent()
 
         self.env_thread = EnvironmentThread(self.environment)
         self.env_thread.finished.connect(app.exit)
-        self.env_thread.start()
+
+        self.agent_thread = AgentThread(self.agent, self.environment)
+
+        SCREEN.thing_spawn.connect(self.spawn_handler)
+        SCREEN.thing_deleted.connect(self.deleted_thing_handler)
+        SCREEN.thing_moved.connect(self.moved_handler)
 
         self.dirt_rects = []
         self.jewel_rects = []
+        self.agent_rect = None
 
         self.setup_ui()
         self.view.show()
+
+        self.environment.add_thing(self.agent)
+
+        self.env_thread.start()
+        self.agent_thread.start()
+
+    def moved_handler(self, thing):
+        if isinstance(thing, VacuumAgent):
+            self.draw_agent(thing.position)
+        else:
+            raise NotImplementedError
 
     def spawn_handler(self, thing):
         if isinstance(thing, Dirt):
             self.draw_dirt(thing.position)
         elif isinstance(thing, Jewel):
             self.draw_jewel(thing.position)
+        elif isinstance(thing, VacuumAgent):
+            self.draw_agent(thing.position)
 
     def deleted_thing_handler(self, thing):
         position = convert_position(thing.position)
@@ -89,6 +120,18 @@ class Window(QMainWindow):
         brush.setColor(Qt.gray)
         self.dirt_rects.append(self.scene.addRect(QRectF(position.x - 50, position.y - 50, 100, 100),
                                                   brush=brush))
+
+    def draw_agent(self, position: Position):
+        position = convert_position(position)
+        pen = QPen()
+        pen.setStyle(Qt.SolidLine)
+        pen.setWidth(3)
+        pen.setColor(Qt.red)
+        if self.agent_rect:
+            self.agent_rect.setRect(QRectF(position.x - 40, position.y - 40, 80, 80))
+        else:
+            self.agent_rect = self.scene.addRect(QRectF(position.x - 40, position.y - 40, 80, 80),
+                                                 pen=pen)
 
     def setup_ui(self):
         self.setWindowTitle("Vacuum Agent")

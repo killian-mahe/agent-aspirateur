@@ -16,9 +16,6 @@ class State(object):
     def __hash__(self):
         raise NotImplementedError
 
-    def __str__(self):
-        return ""
-
 
 class Problem(object):
     def __init__(self, initial=None, goal=None):
@@ -93,7 +90,9 @@ class Node(object):
         self.cost = cost
 
     def __repr__(self):
-        return f"{self.state}"
+        if self.state:
+            return f"Node of {self.state}"
+        return "Null node"
 
     def __len__(self):
         return 0 if self.parent is None else (len(self.parent) + 1)
@@ -146,11 +145,14 @@ class Stack:
     def __init__(self):
         self.stack = []
 
-    def add(self,element):
+    def add(self, element):
         self.stack.append(element)
 
     def pop(self):
         return self.stack.pop()
 
-    def isEmpty(self):
+    def is_empty(self):
         return self.stack == []
+
+    def __str__(self):
+        return str(self.stack)

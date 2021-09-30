@@ -5,7 +5,30 @@ from copy import deepcopy
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from interfaces import State, Problem, SimpleProblemSolvingAgentProgram
+from interfaces import State, SimpleProblemSolvingAgentProgram, Node
+from problem import VacuumProblem
+from algorithms import dfs
+
+
+class Screen(QObject):
+    thing_spawn = pyqtSignal('PyQt_PyObject')
+    thing_deleted = pyqtSignal('PyQt_PyObject')
+    thing_moved = pyqtSignal('PyQt_PyObject')
+
+    def __init__(self):
+        QObject.__init__(self)
+
+    def move_thing(self, thing):
+        self.thing_moved.emit(thing)
+
+    def spawn_thing(self, thing):
+        self.thing_spawn.emit(thing)
+
+    def delete_thing(self, thing):
+        self.thing_deleted.emit(thing)
+
+
+SCREEN = Screen()
 
 
 class Position:
@@ -49,12 +72,9 @@ class Jewel(Thing):
     pass
 
 
-class Environment(State, QObject):
-    thing_spawn = pyqtSignal('PyQt_PyObject')
-    thing_deleted = pyqtSignal('PyQt_PyObject')
+class Environment(State):
 
     def __init__(self):
-        QObject.__init__(self)
         self.things = []
         self.agent = None
         self.x_max = 5
@@ -68,17 +88,14 @@ class Environment(State, QObject):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(self.percept(self.agent).pop(0))
-
-    def __str__(self):
-        pass
+        return hash(self.map())
 
     def run(self):
         while True:
             if random() <= self.dirt_probability:
-                self.thing_spawn.emit(self.generate_dirt())
+                SCREEN.spawn_thing(self.generate_dirt())
             if random() <= self.jewel_probability:
-                self.thing_spawn.emit(self.generate_jewel())
+                SCREEN.spawn_thing(self.generate_jewel())
             sleep(0.005)
 
     def something_at(self, location, thing_class=None):
@@ -93,32 +110,30 @@ class Environment(State, QObject):
         else:
             raise NotImplementedError
 
-    def map(self, agent):
+    def map(self):
         sensor_map = []
         for y in range(0, self.y_max):
             for x in range(0, self.x_max):
                 things = self.something_at(Position(x, y), Dirt)
                 if things:
-                    sensor_map += [(x, y), "Dirty"]
+                    sensor_map.append(((x, y), "Dirty"))
                 else:
-                    sensor_map += [(x, y), "Clean"]
-        return [
-            agent.position.to_tuple() +
-            sensor_map
-        ]
+                    sensor_map.append(((x, y), "Clean"))
+        return tuple(sensor_map)
 
     def nearest_dirt(self, agent):
-        def distance(position):
-            return sqrt(pow(agent.position.x - position.x, 2) + pow(agent.position.y - position.y, 2))
+        def distance(t):
+            return sqrt(pow(agent.position.x - t.position.x, 2) + pow(agent.position.y - t.position.y, 2))
+
         for thing in sorted(self.things, key=distance):
             if isinstance(thing, Dirt):
                 return thing.position.x, thing.position.y
 
-    def percept(self, agent):
+    def percept(self):
         """Return the percept that the agent sees at this point."""
         return self
 
-    def execute_action(self, action):
+    def execute_action(self, action, update_screen=False):
         """Change the world to reflect this action."""
         if not isinstance(action, str):
             raise NotImplementedError
@@ -128,13 +143,15 @@ class Environment(State, QObject):
         elif action == "Right":
             self.agent.position.x += 1
         elif action == "Up":
-            self.agent.position.y += 1
-        elif action == "Down":
             self.agent.position.y -= 1
+        elif action == "Down":
+            self.agent.position.y += 1
         elif action == "Grab":
             self.delete_thing_at(self.agent.position, Jewel)
         elif action == "Suck":
             self.delete_thing_at(self.agent.position, [Dirt, Jewel])
+        if update_screen:
+            SCREEN.move_thing(self.agent)
 
     def random_location(self):
         x = randint(0, self.x_max - 1)
@@ -148,31 +165,44 @@ class Environment(State, QObject):
         return self.add_thing(Dirt(position))
 
     def add_thing(self, thing):
-        if isinstance(thing, Thing):
+        if issubclass(type(thing), Agent):
+            self.agent = thing
+            self.agent.position = self.random_location()
+            SCREEN.spawn_thing(thing)
+            return self.agent
+        elif isinstance(thing, Thing):
             self.things.append(thing)
             return thing
         raise NotImplementedError
 
-    def delete_thing(self, deleted_thing):
+    def delete_thing(self, deleted_thing, update_screen=False):
         if deleted_thing in self.things:
-            self.thing_deleted.emit(deleted_thing)
+            if update_screen:
+                SCREEN.delete_thing(deleted_thing)
             self.things.remove(deleted_thing)
 
-    def delete_thing_at(self, position, things_class: Thing = Dirt):
+    def delete_thing_at(self, position, things_class: Thing = Dirt, update_screen=False):
         if not isinstance(things_class, list):
             things_class = [things_class]
         for thing_class in things_class:
             things = self.something_at(position, thing_class)
             if things:
                 self.delete_thing(things[0])
-            else:
-                raise RuntimeError
 
     def generate_jewel(self):
         position = self.random_location()
         while self.something_at(position, Jewel):
             position = self.random_location()
         return self.add_thing(Jewel(position))
+
+
+class Sensor:
+
+    def __init__(self, environment):
+        self.environment = environment
+
+    def get_percept(self):
+        return self.environment.percept()
 
 
 class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
@@ -193,6 +223,7 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         SimpleProblemSolvingAgentProgram.__init__(self)
         self.alive = True
         self.performance = 0
+        self.sensor = None
 
     def can_grab(self, thing):
         """Return True if this agent can grab this thing.
@@ -205,14 +236,16 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         return deepcopy(percept)
 
     def formulate_goal(self, state):
-        state = deepcopy(state)
-        nearest_dirty_room = state.nearest_dirt(self)
-        state.delete_thing_at(Position(nearest_dirty_room[0], nearest_dirty_room[1]))
-        return state
+        goal = deepcopy(state)
+        nearest_dirty_room = goal.nearest_dirt(self)
+        if nearest_dirty_room:
+            goal.delete_thing_at(Position(nearest_dirty_room[0], nearest_dirty_room[1]))
+        return goal
 
     def formulate_problem(self, state, goal):
-        problem = Problem(state, goal)
+        problem = VacuumProblem(state, goal)
         return problem
 
     def search(self, problem):
-        raise NotImplementedError
+        final_node = dfs(problem)
+        return Node.action_sequence(final_node)

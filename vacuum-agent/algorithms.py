@@ -13,11 +13,12 @@ def dfs(problem):
     """Depth First Search"""
     init_node = Node(problem.initial)
     frontier = Stack()
-    frontier.append(init_node)
+    frontier.add(init_node)
     searched_nodes = {hash(problem.initial): init_node}  # {hash(state):node}
-    while frontier:
+    while not frontier.is_empty():
         current_node = frontier.pop()
-        if problem.goal_test(current_node):
+        if problem.goal_test(current_node.state):
+            print("Goal achieved !")
             return current_node
         for child in Node.expand(problem, current_node):
             result_state = child.state

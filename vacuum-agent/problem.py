@@ -2,20 +2,21 @@ from interfaces import Problem
 
 
 class VacuumProblem(Problem):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, initial, goal):
+        super().__init__(initial, goal)
 
     def actions(self, state):
-        position = state.agent.position
+        x, y = state.agent.position.to_tuple()  # Agent position
         actions = ["NoOp", "Grab", "Suck"]
-        if position.x != 0:
+        if x != 0:
             actions += ["Left"]
-        if position.x != state.x_max - 1:
+        if x != 4:
             actions += ["Right"]
-        if position.y != 0:
+        if y != 0:
             actions += ["Up"]
-        if position.y != state.y_max - 1:
+        if y != 4:
             actions += ["Down"]
+
         return actions
 
     def result(self, state, action):
