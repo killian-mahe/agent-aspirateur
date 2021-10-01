@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
 from problem import VacuumProblem
-from algorithms import breadth_first_graph_search, dfs, greedy_bfs
+from algorithms import breadth_first_graph_search, dfs, greedy_bfs, astar
 
 
 class Screen(QObject):
@@ -234,7 +234,7 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
 
     def search(self, problem):
         print("Searching for a solution")
-        final_node = greedy_bfs(problem)
+        final_node = astar(problem)
         seq = Node.action_sequence(final_node)
         if seq:
             print("Solution found : %s" % seq)
