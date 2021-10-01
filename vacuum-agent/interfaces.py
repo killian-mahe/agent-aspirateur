@@ -110,10 +110,7 @@ class Node(object):
 
     @staticmethod
     def action_sequence(node):
-        if not node.parent:
-            return []
-        else:
-            return Node.action_sequence(node.parent) + [node.action]
+        return [] if node.parent is None else Node.action_sequence(node.parent) + [node.action]
 
     @staticmethod
     def state_sequence(node):

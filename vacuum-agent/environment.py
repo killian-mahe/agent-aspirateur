@@ -116,7 +116,7 @@ class Environment(State):
             for x in range(0, self.x_max):
                 if self.something_at(Position(x, y), Dirt):
                     sensor_map.append(((x, y), "Dirt"))
-                if self.something_at(Position(x, y), Dirt):
+                if self.something_at(Position(x, y), Jewel):
                     sensor_map.append(((x, y), "Jewel"))
         if self.agent:
             return tuple([self.agent.position.to_tuple()] + sensor_map)
@@ -238,17 +238,13 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
 
     def formulate_goal(self, state):
         goal = deepcopy(state)
-        nearest_dirty_room = goal.nearest_dirt(self)
-        if nearest_dirty_room:
-            goal.delete_thing_at(Position(nearest_dirty_room[0], nearest_dirty_room[1]))
-        return goal
+        return goal.map()[0]
 
     def formulate_problem(self, state, goal):
         problem = VacuumProblem(state, goal)
         return problem
 
     def search(self, problem):
-        print("Searching for a solution")
         final_node = breadth_first_graph_search(problem)
         seq = Node.action_sequence(final_node)
         if seq:
