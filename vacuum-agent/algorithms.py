@@ -19,7 +19,6 @@ def dfs(problem):
     while not frontier.is_empty():
         current_node = frontier.pop()
         if problem.goal_test(current_node.state):
-            print("Goal achieved !")
             return current_node
         for child in Node.expand(problem, current_node):
             result_state = child.state

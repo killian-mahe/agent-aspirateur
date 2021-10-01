@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
 from problem import VacuumProblem
-from algorithms import breadth_first_graph_search
+from algorithms import breadth_first_graph_search, dfs
 
 
 class Screen(QObject):
@@ -96,7 +96,7 @@ class Environment(State):
                 SCREEN.spawn_thing(self.generate_dirt())
             if random() <= self.jewel_probability:
                 SCREEN.spawn_thing(self.generate_jewel())
-            sleep(0.005)
+            sleep(0.01)
 
     def something_at(self, location, thing_class=None):
         if issubclass(thing_class, Agent) and self.agent.position == location:
@@ -245,7 +245,8 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         return problem
 
     def search(self, problem):
-        final_node = breadth_first_graph_search(problem)
+        print("Searching for a solution")
+        final_node = dfs(problem)
         seq = Node.action_sequence(final_node)
         if seq:
             print("Solution found : %s" % seq)
