@@ -152,8 +152,6 @@ class Environment(State):
         elif action == "Suck":
             self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
         if update_screen:
-            if action == "Suck":
-                print(self.agent.position)
             SCREEN.move_thing(self.agent)
 
     def random_location(self):
