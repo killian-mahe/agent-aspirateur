@@ -79,7 +79,7 @@ class Environment(State):
         self.agent = None
         self.x_max = 5
         self.y_max = 5
-        self.dirt_probability = 0.005
+        self.dirt_probability = 0.05
         self.jewel_probability = 0.005
         self.performance = 0
 
@@ -97,7 +97,7 @@ class Environment(State):
                 SCREEN.spawn_thing(self.generate_dirt())
             if random() <= self.jewel_probability:
                 SCREEN.spawn_thing(self.generate_jewel())
-            sleep(0.01)
+            sleep(0.2)
 
     def something_at(self, location, thing_class=None):
         if issubclass(thing_class, Agent) and self.agent.position == location:
