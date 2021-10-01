@@ -49,11 +49,7 @@ class VacuumProblem(Problem):
 
     def actions(self, state):
         (x, y) = state.agent.position.to_tuple()  # Agent position
-        actions = []
-        if state.something_at(state.agent.position, Jewel):
-            actions += ["Grab"]
-        elif state.something_at(state.agent.position, Dirt):
-            actions += ["Suck"]
+        actions = ["Grab", "Suck"]
         if x != 0:
             actions += ["Left"]
         if x != 4:
@@ -73,7 +69,10 @@ class VacuumProblem(Problem):
         return result
 
     def cost(self, current_state=None, action=None, future_state=None):
-        return 2
+        c = 1
+        if action == "Suck" and current_state.something_at(current_state.agent.position, Jewel):
+            c += 100
+        return c
 
     ''' #Sum of Manhattan Distance
     def heuristic(self, state, action=None):
