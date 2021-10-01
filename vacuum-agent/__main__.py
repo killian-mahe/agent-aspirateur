@@ -35,7 +35,7 @@ class AgentThread(QThread):
         while self.agent.alive:
             percept_timer -= 1
             current_state = self.environment.map()
-            if percept_timer<=0 and current_state[1::] != stored_state[1::] and len(current_state) > 1:
+            if percept_timer <= 0 and current_state[1::] != stored_state[1::] and len(current_state) > 1:
                 stored_state = current_state
                 stored_sequence = self.agent(self.environment.percept())
                 action_id = 0
