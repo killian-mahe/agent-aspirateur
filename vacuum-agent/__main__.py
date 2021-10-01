@@ -3,7 +3,7 @@ import sys
 
 from environment import Environment, Dirt, Jewel, Position, VacuumAgent, SCREEN
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QLabel, QGridLayout
 from PyQt5.QtCore import QThread, QRectF, Qt, QPointF
 from PyQt5.QtGui import QBrush, QPolygonF, QPen
 
@@ -42,8 +42,9 @@ class AgentThread(QThread):
             if stored_sequence and action_id < len(stored_sequence):
                 self.environment.execute_action(stored_sequence[action_id], True)
                 action_id += 1
-            if percept_timer <= 0: percept_timer = 5
-            sleep(0.2)
+            if percept_timer <= 0:
+                percept_timer = 5
+            sleep(0.05)
 
 
 def convert_position(position: Position):
@@ -69,10 +70,13 @@ class Window(QMainWindow):
         SCREEN.thing_spawn.connect(self.spawn_handler)
         SCREEN.thing_deleted.connect(self.deleted_thing_handler)
         SCREEN.thing_moved.connect(self.moved_handler)
+        SCREEN.performance_updated.connect(self.performance_handler)
 
         self.dirt_rects = []
         self.jewel_rects = []
         self.agent_rect = None
+        self.performance_label = None
+        self.layout = None
 
         self.setup_ui()
         self.view.show()
@@ -87,6 +91,9 @@ class Window(QMainWindow):
             self.draw_agent(thing.position)
         else:
             raise NotImplementedError
+
+    def performance_handler(self, performance):
+        self.performance_label.setText(f'Agent performance : {str(performance)}')
 
     def spawn_handler(self, thing):
         if isinstance(thing, Dirt):
@@ -147,8 +154,13 @@ class Window(QMainWindow):
         self.resize(1000, 800)
         self.setCentralWidget(self.view)
 
+        self.layout = QGridLayout(self.view)
+
         # Build scene
         self.scene.addRect(QRectF(0, 0, 500, 500))
+        self.performance_label = QLabel(self)
+
+        self.layout.addWidget(self.performance_label)
 
         for y in range(0, self.environment.y_max):
             for x in range(0, self.environment.x_max):

@@ -1,4 +1,5 @@
 import heapq
+
 """
 ------------------------
 -      PRIMITIVES      -
@@ -57,7 +58,8 @@ class SimpleProblemSolvingAgentProgram:
                 return None
         try:
             return self.seq
-        finally: self.seq=[]
+        finally:
+            self.seq = []
 
     def update_state(self, state, percept):
         raise NotImplementedError
