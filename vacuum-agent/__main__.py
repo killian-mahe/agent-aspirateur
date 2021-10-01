@@ -126,7 +126,8 @@ class Window(QMainWindow):
         pen.setWidth(3)
         pen.setColor(Qt.red)
         if self.agent_rect:
-            self.agent_rect.setRect(QRectF(position.x - 40, position.y - 40, 80, 80))
+            self.agent_rect.setRect(
+                QRectF(position.x - 40, position.y - 40, 80, 80))
         else:
             self.agent_rect = self.scene.addRect(QRectF(position.x - 40, position.y - 40, 80, 80),
                                                  pen=pen)
