@@ -33,7 +33,7 @@ class VacuumProblem(Problem):
     def heuristic(self, state, action=None):
         h = 0
         state_map = state.state.map()
-        agent = state_map[0]
+        agent_position = state_map[0]
         for t in state_map[1::]:
-            h += (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1]))
+            h += (abs(agent_position[0] - t[0][0]) + abs(agent_position[1] - t[0][1]))
         return h
