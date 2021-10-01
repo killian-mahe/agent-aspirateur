@@ -1,78 +1,65 @@
 from random import random, randint
 from math import sqrt, pow
 from time import sleep
+from typing import Union, List, Tuple
+
 from copy import deepcopy
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
-from problem import VacuumProblem
+from problem import VacuumProblem, Agent, Thing, Dirt, Jewel, Position
 from algorithms import breadth_first_search, dfs, greedy_bfs, astar
 
 
 class Screen(QObject):
+    """Make the link between the environment and the GUI."""
     thing_spawn = pyqtSignal('PyQt_PyObject')
     thing_deleted = pyqtSignal('PyQt_PyObject')
     thing_moved = pyqtSignal('PyQt_PyObject')
+    performance_updated = pyqtSignal('PyQt_PyObject')
 
     def __init__(self):
         QObject.__init__(self)
 
-    def move_thing(self, thing):
+    def move_thing(self, thing: Thing):
+        """
+        Move thing on the map.
+        :param thing:
+        :return:
+        """
         self.thing_moved.emit(thing)
 
-    def spawn_thing(self, thing):
+    def spawn_thing(self, thing: Thing):
+        """
+        Create a new thing on the map.
+        :param thing:
+        :return:
+        """
         self.thing_spawn.emit(thing)
 
-    def delete_thing(self, thing):
+    def delete_thing(self, thing: Thing):
+        """
+        Delete an existing thing on the map
+        :param thing:
+        :return:
+        """
         self.thing_deleted.emit(thing)
+
+    def update_performance(self, performance: int):
+        """
+        Update the performance label.
+        :param performance:
+        :return:
+        """
+        self.performance_updated.emit(performance)
 
 
 SCREEN = Screen()
 
 
-class Position:
-
-    def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
-
-    def __eq__(self, other):
-        if not isinstance(other, Position):
-            raise NotImplementedError
-        if self.x == other.x and self.y == other.y:
-            return True
-        return False
-
-    def __str__(self):
-        return "(%s,%s)" % (self.x, self.y)
-
-    def to_tuple(self):
-        return self.x, self.y
-
-
-class Thing:
-
-    def __init__(self, position: Position = None, x=0, y=0):
-        if position and isinstance(position, Position):
-            self.position = position
-        else:
-            self.position = Position(x, y)
-
-
-class Agent(Thing):
-    pass
-
-
-class Dirt(Thing):
-    pass
-
-
-class Jewel(Thing):
-    pass
-
-
 class Environment(State):
+    """Represent the environment with the rooms, dirt and jewels."""
 
     def __init__(self):
         self.things = []
@@ -80,8 +67,8 @@ class Environment(State):
         self.x_max = 5
         self.y_max = 5
         self.dirt_probability = 0.05
-        self.jewel_probability = 0.005
-        self.performance = 0
+        self.jewel_probability = 0.02
+        self.performance = 10
 
     def __eq__(self, other):
         if isinstance(other, Environment):
@@ -92,6 +79,7 @@ class Environment(State):
         return hash(self.map())
 
     def run(self):
+        """Run the environment."""
         while True:
             if random() <= self.dirt_probability:
                 SCREEN.spawn_thing(self.generate_dirt())
@@ -99,7 +87,13 @@ class Environment(State):
                 SCREEN.spawn_thing(self.generate_jewel())
             sleep(0.2)
 
-    def something_at(self, location, thing_class=None):
+    def something_at(self, location: Position, thing_class: List = None) -> Union[list[Thing], bool]:
+        """
+        Search for Thing or Agent at the given location.
+        :param location: Location where to search.
+        :param thing_class: Classes to search.
+        :return:
+        """
         if issubclass(thing_class, Agent) and self.agent.position == location:
             return self.agent
         if issubclass(thing_class, Thing):
@@ -111,7 +105,11 @@ class Environment(State):
         else:
             raise NotImplementedError
 
-    def map(self):
+    def map(self) -> Tuple:
+        """
+        Get the map corresponding to the current state.
+        :return: The map.
+        """
         sensor_map = []
         for thing in self.things:
             sensor_map.append((thing.position.to_tuple(), "Dirt" if isinstance(thing, Dirt) else "Jewel"))
@@ -119,7 +117,7 @@ class Environment(State):
             return tuple([self.agent.position.to_tuple()] + sensor_map)
         return tuple(sensor_map)
 
-    def nearest_dirt(self, agent):
+    def nearest_dirt(self, agent: Agent) -> Tuple:
         def distance(t):
             return sqrt(pow(agent.position.x - t.position.x, 2) + pow(agent.position.y - t.position.y, 2))
 
@@ -130,28 +128,37 @@ class Environment(State):
     def percept(self):
         return self
 
+    def set_performance(self, performance, update_screen=False):
+        self.performance = performance
+        if update_screen:
+            SCREEN.update_performance(performance)
+
     def execute_action(self, action, update_screen=False):
         if not isinstance(action, str):
             raise NotImplementedError
 
         if action == "Left" and self.agent.position.x > 0:
             self.agent.position.x -= 1
+            self.set_performance(self.performance - 1, update_screen)
         elif action == "Right" and self.agent.position.x < self.x_max - 1:
             self.agent.position.x += 1
+            self.set_performance(self.performance - 1, update_screen)
         elif action == "Up" and self.agent.position.y > 0:
             self.agent.position.y -= 1
+            self.set_performance(self.performance - 1, update_screen)
         elif action == "Down" and self.agent.position.y < self.y_max - 1:
             self.agent.position.y += 1
+            self.set_performance(self.performance - 1, update_screen)
         elif action == "Grab":
             deleted_things = self.delete_thing_at(self.agent.position, Jewel, update_screen)
             if Jewel in deleted_things:
-                self.performance += 5
+                self.set_performance(self.performance + 10, update_screen)
         elif action == "Suck":
             deleted_things = self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
             if Dirt in deleted_things:
-                self.performance += 1
+                self.set_performance(self.performance + 5, update_screen)
             if Jewel in deleted_things:
-                self.performance -= 1
+                self.set_performance(self.performance - 1, update_screen)
         if update_screen:
             SCREEN.move_thing(self.agent)
 

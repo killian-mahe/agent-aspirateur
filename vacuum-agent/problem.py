@@ -2,6 +2,47 @@ from interfaces import Problem
 from copy import deepcopy
 
 
+class Position:
+
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        if not isinstance(other, Position):
+            raise NotImplementedError
+        if self.x == other.x and self.y == other.y:
+            return True
+        return False
+
+    def __str__(self):
+        return "(%s,%s)" % (self.x, self.y)
+
+    def to_tuple(self):
+        return self.x, self.y
+
+
+class Thing:
+
+    def __init__(self, position: Position = None, x=0, y=0):
+        if position and isinstance(position, Position):
+            self.position = position
+        else:
+            self.position = Position(x, y)
+
+
+class Agent(Thing):
+    pass
+
+
+class Dirt(Thing):
+    pass
+
+
+class Jewel(Thing):
+    pass
+
+
 class VacuumProblem(Problem):
     def __init__(self, initial, goal):
         super().__init__(initial, goal)
@@ -28,7 +69,10 @@ class VacuumProblem(Problem):
         return result
 
     def cost(self, current_state=None, action=None, future_state=None):
-        return 1
+        c = 1
+        if action == "Suck" and current_state.something_at(current_state.agent.position, Jewel):
+            c += 100
+        return c
 
     ''' #Sum of Manhattan Distance
     def heuristic(self, state, action=None):
@@ -46,7 +90,7 @@ class VacuumProblem(Problem):
         agent = state_map[0]
         nnd = 15
         for t in state_map[1::]:
-            current_dist = (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1])-1)
+            current_dist = (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1]) - 1)
             if current_dist < nnd:
                 nnd = current_dist
         return nnd
