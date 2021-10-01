@@ -29,12 +29,8 @@ def dfs(problem):
     return Node("FAILED", cost=math.inf)
 
 
-def breadth_first_graph_search(problem):
-    """[Figure 3.11]
-    Note that this function can be implemented in a
-    single line as below:
-    return graph_search(problem, FIFOQueue())
-    """
+def breadth_first_search(problem):
+    """Breadth First Search"""
     node = Node(problem.initial)
     if problem.goal_test(node.state):
         return node
