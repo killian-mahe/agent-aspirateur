@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
 from problem import VacuumProblem
-from algorithms import breadth_first_graph_search, dfs, greedy_bfs, astar
+from algorithms import breadth_first_search, dfs, greedy_bfs, astar
 
 
 class Screen(QObject):
