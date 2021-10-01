@@ -27,9 +27,10 @@ class VacuumProblem(Problem):
         result.execute_action(action)
         return result
 
-    def cost(self, current_state, action, future_state):
+    def cost(self, current_state=None, action=None, future_state=None):
         return 1
 
+    ''' #Sum of Manhattan Distance
     def heuristic(self, state, action=None):
         h = 0
         state_map = state.state.map()
@@ -37,3 +38,15 @@ class VacuumProblem(Problem):
         for t in state_map[1::]:
             h += (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1]))
         return h
+    '''
+
+    # Nearest Neighbour
+    def heuristic(self, state, action=None):
+        state_map = state.state.map()
+        agent = state_map[0]
+        nnd = 15
+        for t in state_map[1::]:
+            current_dist = (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1]))
+            if current_dist < nnd:
+                nnd = current_dist
+        return nnd
