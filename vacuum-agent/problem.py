@@ -20,7 +20,7 @@ class VacuumProblem(Problem):
         return actions
 
     def goal_test(self, state):
-        return state.map()[1::] == self.goal.map()[1::]
+        return len(state.map()) == 1
 
     def result(self, state, action):
         result = deepcopy(state)

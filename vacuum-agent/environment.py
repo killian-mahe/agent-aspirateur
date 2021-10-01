@@ -114,11 +114,10 @@ class Environment(State):
         sensor_map = []
         for y in range(0, self.y_max):
             for x in range(0, self.x_max):
-                things = self.something_at(Position(x, y), Dirt)
-                if things:
-                    sensor_map.append(((x, y), "Dirty"))
-                else:
-                    sensor_map.append(((x, y), "Clean"))
+                if self.something_at(Position(x, y), Dirt):
+                    sensor_map.append(((x, y), "Dirt"))
+                if self.something_at(Position(x, y), Dirt):
+                    sensor_map.append(((x, y), "Jewel"))
         if self.agent:
             return tuple([self.agent.position.to_tuple()] + sensor_map)
         return tuple(sensor_map)
