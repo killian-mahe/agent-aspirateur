@@ -29,9 +29,12 @@ class AgentThread(QThread):
 
     def run(self):
         while self.agent.alive:
+            print(self.agent.position)
+            print(self.environment.map())
             seq = self.agent(self.environment.percept())
             if seq:
                 self.environment.execute_action(seq, True)
+
             sleep(0.1)
 
 
