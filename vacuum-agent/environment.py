@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
 from problem import VacuumProblem
-from algorithms import breadth_first_graph_search, dfs, greedy_bfs, astar
+from algorithms import breadth_first_search, dfs, greedy_bfs, astar
 
 
 class Screen(QObject):
@@ -80,7 +80,8 @@ class Environment(State):
         self.x_max = 5
         self.y_max = 5
         self.dirt_probability = 0.005
-        self.jewel_probability = 0.0001
+        self.jewel_probability = 0.005
+        self.performance = 0
 
     def __eq__(self, other):
         if isinstance(other, Environment):
@@ -112,12 +113,8 @@ class Environment(State):
 
     def map(self):
         sensor_map = []
-        for y in range(0, self.y_max):
-            for x in range(0, self.x_max):
-                if self.something_at(Position(x, y), Dirt):
-                    sensor_map.append(((x, y), "Dirt"))
-                if self.something_at(Position(x, y), Jewel):
-                    sensor_map.append(((x, y), "Jewel"))
+        for thing in self.things:
+            sensor_map.append((thing.position.to_tuple(), "Dirt" if isinstance(thing, Dirt) else "Jewel"))
         if self.agent:
             return tuple([self.agent.position.to_tuple()] + sensor_map)
         return tuple(sensor_map)
@@ -131,11 +128,9 @@ class Environment(State):
                 return thing.position.x, thing.position.y
 
     def percept(self):
-        """Return the percept that the agent sees at this point."""
         return self
 
     def execute_action(self, action, update_screen=False):
-        """Change the world to reflect this action."""
         if not isinstance(action, str):
             raise NotImplementedError
 
@@ -148,9 +143,15 @@ class Environment(State):
         elif action == "Down" and self.agent.position.y < self.y_max - 1:
             self.agent.position.y += 1
         elif action == "Grab":
-            self.delete_thing_at(self.agent.position, Jewel, update_screen)
+            deleted_things = self.delete_thing_at(self.agent.position, Jewel, update_screen)
+            if Jewel in deleted_things:
+                self.performance += 5
         elif action == "Suck":
-            self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
+            deleted_things = self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
+            if Dirt in deleted_things:
+                self.performance += 1
+            if Jewel in deleted_things:
+                self.performance -= 1
         if update_screen:
             SCREEN.move_thing(self.agent)
 
@@ -189,6 +190,7 @@ class Environment(State):
             things = self.something_at(position, thing_class)
             if things:
                 self.delete_thing(things[0], update_screen)
+                yield thing_class
 
     def generate_jewel(self):
         position = self.random_location()
@@ -207,28 +209,14 @@ class Sensor:
 
 
 class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
-    """An Agent is a subclass of Thing with one required instance attribute
-    (aka slot), .program, which should hold a function that takes one argument,
-    the percept, and returns an action. (What counts as a percept or action
-    will depend on the specific environment in which the agent exists.)
-    Note that 'program' is a slot, not a method. If it were a method, then the
-    program could 'cheat' and look at aspects of the agent. It's not supposed
-    to do that: the program can only look at the percepts. An agent program
-    that needs a model of the world (and of the agent itself) will have to
-    build and maintain its own model. There is an optional slot, .performance,
-    which is a number giving the performance measure of the agent in its
-    environment."""
 
     def __init__(self):
         Thing.__init__(self)
         SimpleProblemSolvingAgentProgram.__init__(self)
         self.alive = True
         self.performance = 0
-        self.sensor = None
 
     def can_grab(self, thing):
-        """Return True if this agent can grab this thing.
-        Override for appropriate subclasses of Agent and Thing."""
         if isinstance(thing, (Dirt, Jewel)):
             return True
         return False
