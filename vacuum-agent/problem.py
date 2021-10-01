@@ -7,8 +7,8 @@ class VacuumProblem(Problem):
         super().__init__(initial, goal)
 
     def actions(self, state):
-        x, y = state.agent.position.to_tuple()  # Agent position
-        actions = ["NoOp", "Grab", "Suck"]
+        (x, y) = state.agent.position.to_tuple()  # Agent position
+        actions = ["Grab", "Suck"]
         if x != 0:
             actions += ["Left"]
         if x != 4:
@@ -28,9 +28,12 @@ class VacuumProblem(Problem):
         return result
 
     def cost(self, current_state, action, future_state):
-        if action == "NoOp":
-            return 0
         return 1
 
-    def heuristic(self, state, action):
-        return 0
+    def heuristic(self, state, action=None):
+        h = 0
+        state_map = state.state.map()
+        agent = state_map[0]
+        for t in state_map[1::]:
+            h += (abs(agent[0] - t[0][0]) + abs(agent[1] - t[0][1]))
+        return h

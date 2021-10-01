@@ -64,8 +64,8 @@ def bfs(problem, func):
     frontier = PriorityQueue([init_node], key=func)
     searched_nodes = {hash(problem.initial): init_node}  # {hash(state):node}
     while frontier:
-        current_node = frontier.pop()
-        if problem.goal_test(current_node):
+        current_node = frontier.pop()[1]
+        if problem.goal_test(current_node.state):
             return current_node
         for child in Node.expand(problem, current_node):
             result_state = child.state
