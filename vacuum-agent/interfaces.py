@@ -60,7 +60,9 @@ class SimpleProblemSolvingAgentProgram:
             self.seq = self.search(problem)
             if not self.seq:
                 return None
-        return self.seq.pop(0)
+        try:
+            return self.seq
+        finally: self.seq=[]
 
     def update_state(self, state, percept):
         raise NotImplementedError

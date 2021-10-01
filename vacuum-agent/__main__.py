@@ -28,11 +28,19 @@ class AgentThread(QThread):
         self.agent = agent
 
     def run(self):
+        stored_state = self.environment.map()
+        stored_sequence = None
+        action_id = 0
         while self.agent.alive:
-            seq = self.agent(self.environment.percept())
-            if seq:
-                self.environment.execute_action(seq, True)
-            sleep(0.5)
+            current_state = self.environment.map()
+            if current_state[1::] != stored_state[1::] and len(current_state) > 1:
+                stored_state = current_state
+                stored_sequence = self.agent(self.environment.percept())
+                action_id = 0
+            if stored_sequence and action_id < len(stored_sequence):
+                self.environment.execute_action(stored_sequence[action_id], True)
+                action_id += 1
+            sleep(0.2)
 
 
 def convert_position(position: Position):
