@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 from interfaces import State, SimpleProblemSolvingAgentProgram, Node
 from problem import VacuumProblem
-from algorithms import dfs
+from algorithms import breadth_first_graph_search
 
 
 class Screen(QObject):
@@ -79,8 +79,8 @@ class Environment(State):
         self.agent = None
         self.x_max = 5
         self.y_max = 5
-        self.dirt_probability = 0.01
-        self.jewel_probability = 0.001
+        self.dirt_probability = 0.005
+        self.jewel_probability = 0.0001
 
     def __eq__(self, other):
         if isinstance(other, Environment):
@@ -119,6 +119,8 @@ class Environment(State):
                     sensor_map.append(((x, y), "Dirty"))
                 else:
                     sensor_map.append(((x, y), "Clean"))
+        if self.agent:
+            return tuple([self.agent.position.to_tuple()] + sensor_map)
         return tuple(sensor_map)
 
     def nearest_dirt(self, agent):
@@ -138,13 +140,13 @@ class Environment(State):
         if not isinstance(action, str):
             raise NotImplementedError
 
-        if action == "Left":
+        if action == "Left" and self.agent.position.x > 0:
             self.agent.position.x -= 1
-        elif action == "Right":
+        elif action == "Right" and self.agent.position.x < self.x_max - 1:
             self.agent.position.x += 1
-        elif action == "Up":
+        elif action == "Up" and self.agent.position.y > 0:
             self.agent.position.y -= 1
-        elif action == "Down":
+        elif action == "Down" and self.agent.position.y < self.y_max - 1:
             self.agent.position.y += 1
         elif action == "Grab":
             self.delete_thing_at(self.agent.position, Jewel)
@@ -247,5 +249,9 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         return problem
 
     def search(self, problem):
-        final_node = dfs(problem)
-        return Node.action_sequence(final_node)
+        print("Searching for a solution")
+        final_node = breadth_first_graph_search(problem)
+        seq = Node.action_sequence(final_node)
+        if seq:
+            print("Solution found : %s" % seq)
+        return seq

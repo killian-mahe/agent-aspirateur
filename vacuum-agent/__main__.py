@@ -31,10 +31,8 @@ class AgentThread(QThread):
         while self.agent.alive:
             seq = self.agent(self.environment.percept())
             if seq:
-                print(seq)
-                for action in seq:
-                    self.environment.execute_action(action)
-            sleep(0.01)
+                self.environment.execute_action(seq, True)
+            sleep(0.1)
 
 
 def convert_position(position: Position):

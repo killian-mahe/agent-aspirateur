@@ -106,11 +106,14 @@ class Node(object):
         for action in problem.actions(current_state):
             child_state = problem.result(current_state, action)
             cost = node.cost + problem.cost(current_state, action, child_state)
-            yield Node(child_state, current_state, action, cost)
+            yield Node(child_state, node, action, cost)
 
     @staticmethod
     def action_sequence(node):
-        return [] if node.parent is None else Node.action_sequence(node.parent) + [node.action]
+        if not node.parent:
+            return []
+        else:
+            return Node.action_sequence(node.parent) + [node.action]
 
     @staticmethod
     def state_sequence(node):

@@ -1,4 +1,5 @@
 from interfaces import Problem
+from copy import deepcopy
 
 
 class VacuumProblem(Problem):
@@ -16,12 +17,15 @@ class VacuumProblem(Problem):
             actions += ["Up"]
         if y != 4:
             actions += ["Down"]
-
         return actions
 
+    def goal_test(self, state):
+        return state.map()[1::] == self.goal.map()[1::]
+
     def result(self, state, action):
-        state.execute_action(action)
-        return state
+        result = deepcopy(state)
+        result.execute_action(action)
+        return result
 
     def cost(self, current_state, action, future_state):
         if action == "NoOp":
