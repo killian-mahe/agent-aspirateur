@@ -148,10 +148,12 @@ class Environment(State):
         elif action == "Down" and self.agent.position.y < self.y_max - 1:
             self.agent.position.y += 1
         elif action == "Grab":
-            self.delete_thing_at(self.agent.position, Jewel)
+            self.delete_thing_at(self.agent.position, Jewel, update_screen)
         elif action == "Suck":
-            self.delete_thing_at(self.agent.position, [Dirt, Jewel])
+            self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
         if update_screen:
+            if action == "Suck":
+                print(self.agent.position)
             SCREEN.move_thing(self.agent)
 
     def random_location(self):
@@ -188,7 +190,7 @@ class Environment(State):
         for thing_class in things_class:
             things = self.something_at(position, thing_class)
             if things:
-                self.delete_thing(things[0])
+                self.delete_thing(things[0], update_screen)
 
     def generate_jewel(self):
         position = self.random_location()
