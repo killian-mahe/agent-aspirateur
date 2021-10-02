@@ -1,4 +1,5 @@
 import heapq
+from typing import List
 
 """
 ------------------------
@@ -25,24 +26,48 @@ class Problem(object):
         self.goal = goal
         self.initial = initial
 
-    def actions(self, state):
-        """returns a list of eligible actions for a given state"""
+    def actions(self, state: State) -> List[str]:
+        """
+        Returns a list of eligible actions for a given state.
+        :param state:
+        :return:
+        """
         raise NotImplementedError
 
-    def result(self, state, action):
-        """resolves the change to the state with a given action,returns a future state."""
+    def result(self, state: State, action: str) -> State:
+        """
+        Resolves the change to the state with a given action,returns a future state.
+        :param state:
+        :param action:
+        :return:
+        """
         raise NotImplementedError
 
-    def goal_test(self, state) -> bool:
-        """checks if a state is a goal state."""
+    def goal_test(self, state: State) -> bool:
+        """
+        Checks if a state is a goal state.
+        :param state:
+        :return:
+        """
         return state == self.goal
 
-    def cost(self, current_state, action, future_state):
-        """The cost of the given action from current state to the resulting state """
+    def cost(self, current_state: State, action: str, future_state: State) -> int:
+        """
+        The cost of the given action from current state to the resulting state.
+        :param current_state:
+        :param action:
+        :param future_state:
+        :return:
+        """
         return 1
 
-    def heuristic(self, state, action):
-        """An estimation of how close a given state is to the goal state"""
+    def heuristic(self, state: State, action: str) -> int:
+        """
+        An estimation of how close a given state is to the goal state.
+        :param state:
+        :param action:
+        :return:
+        """
         return 0
 
     def __str__(self):
@@ -56,7 +81,11 @@ class SimpleProblemSolvingAgentProgram:
         self.seq = []
 
     def __call__(self, percept):
-        """Main body of the problem solving process"""
+        """
+        Main structure of the problem solving process.
+        :param percept:
+        :return:
+        """
         self.state = self.update_state(self.state, percept)  # The agent percepts
         if not self.seq:
             goal = self.formulate_goal(self.state)
@@ -69,20 +98,38 @@ class SimpleProblemSolvingAgentProgram:
         finally:
             self.seq = []
 
-    def update_state(self, state, percept):
-        """When agent percepts the environment, update the internal state"""
+    def update_state(self, state: State, percept):
+        """
+        When agent percepts the environment, update the internal state.
+        :param state:
+        :param percept:
+        :return:
+        """
         raise NotImplementedError
 
-    def formulate_goal(self, state):
-        """The agent defines a goal state"""
+    def formulate_goal(self, state: State):
+        """
+        The agent defines a goal state.
+        :param state:
+        :return:
+        """
         raise NotImplementedError
 
-    def formulate_problem(self, state, goal):
-        """The agent defines the problem"""
+    def formulate_problem(self, state: State, goal):
+        """
+        The agent defines the problem.
+        :param state:
+        :param goal:
+        :return:
+        """
         raise NotImplementedError
 
-    def search(self, problem):
-        """The agent finds the solution using an algorithm"""
+    def search(self, problem: Problem) -> List[str]:
+        """
+        The agent finds the solution using an algorithm.
+        :param problem:
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -114,7 +161,12 @@ class Node(object):
 
     @staticmethod
     def expand(problem: Problem, node):
-        """expands a node, returns child nodes"""
+        """
+        Expands a node, returns child nodes.
+        :param problem:
+        :param node:
+        :return:
+        """
         current_state = node.state
         for action in problem.actions(current_state):
             child_state = problem.result(current_state, action)
@@ -123,12 +175,20 @@ class Node(object):
 
     @staticmethod
     def action_sequence(node):
-        """returns a sequence of actions needed to achieve a node"""
+        """
+        Returns a sequence of actions needed to achieve a node.
+        :param node:
+        :return:
+        """
         return [] if node.parent is None else Node.action_sequence(node.parent) + [node.action]
 
     @staticmethod
     def state_sequence(node):
-        """returns a sequence of states to achieve a node"""
+        """
+        Returns a sequence of states to achieve a node.
+        :param node:
+        :return:
+        """
         return [] if node.parent is None else Node.state_sequence(node.parent) + [node.state]
 
 

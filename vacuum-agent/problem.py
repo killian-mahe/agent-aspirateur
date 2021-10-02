@@ -1,8 +1,11 @@
-from interfaces import Problem
+from typing import Tuple, List
+
+from interfaces import Problem, State
 from copy import deepcopy
 
 
 class Position:
+    """Representation of a XY position."""
 
     def __init__(self, x=0, y=0):
         self.x = x
@@ -18,7 +21,8 @@ class Position:
     def __str__(self):
         return "(%s,%s)" % (self.x, self.y)
 
-    def to_tuple(self):
+    def to_tuple(self) -> Tuple:
+        """Convert the position object to tuple."""
         return self.x, self.y
 
 
@@ -44,10 +48,16 @@ class Jewel(Thing):
 
 
 class VacuumProblem(Problem):
+
     def __init__(self, initial, goal):
         super().__init__(initial, goal)
 
-    def actions(self, state):
+    def actions(self, state: State) -> List[str]:
+        """
+        List the possible actions to execute from the given state.
+        :param state:
+        :return: List of actions
+        """
         (x, y) = state.agent.position.to_tuple()  # Agent position
         actions = ["Grab", "Suck"]
         if x != 0:
@@ -60,15 +70,33 @@ class VacuumProblem(Problem):
             actions += ["Down"]
         return actions
 
-    def goal_test(self, state):
+    def goal_test(self, state: State) -> bool:
+        """
+        Test if the given state correspond to the previously fixed goal.
+        :param state:
+        :return:
+        """
         return len(state.map()) == 1
 
-    def result(self, state, action):
+    def result(self, state: State, action: str) -> State:
+        """
+        Execute an action on the given state.
+        :param state:
+        :param action: Action to execute.
+        :return: Resulted state.
+        """
         result = deepcopy(state)
         result.execute_action(action)
         return result
 
-    def cost(self, current_state=None, action=None, future_state=None):
+    def cost(self, current_state=None, action=None, future_state=None) -> int:
+        """
+        Compute the cost of an action.
+        :param current_state: Current state.
+        :param action: Action to execute.
+        :param future_state: Future state.
+        :return:
+        """
         c = 1
         if action == "Suck" and current_state.something_at(current_state.agent.position, Jewel):
             c += 100

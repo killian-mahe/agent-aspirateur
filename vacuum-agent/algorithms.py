@@ -1,7 +1,8 @@
 import math
 from collections import deque
+from typing import Callable
 
-from interfaces import Node, PriorityQueue, Stack
+from interfaces import Node, PriorityQueue, Stack, Problem
 
 """
 ------------------------
@@ -10,8 +11,12 @@ ________________________
 """
 
 
-def dfs(problem):
-    """Depth First Search"""
+def dfs(problem: Problem) -> Node:
+    """
+    Depth First Search algorithm.
+    :param problem: Problem to solve.
+    :return: Solution node or failed node if no solution is found.
+    """
     init_node = Node(problem.initial)
     frontier = Stack()
     frontier.add(init_node)
@@ -29,8 +34,12 @@ def dfs(problem):
     return Node("FAILED", cost=math.inf)
 
 
-def breadth_first_search(problem):
-    """Breadth First Search"""
+def breadth_first_search(problem: Problem) -> Node:
+    """
+    Breadth First Search algorithm.
+    :param problem: Problem to solve.
+    :return: Solution node or failed node if no solution is found.
+    """
     node = Node(problem.initial)
     if problem.goal_test(node.state):
         return node
@@ -44,7 +53,7 @@ def breadth_first_search(problem):
                 if problem.goal_test(child.state):
                     return child
                 frontier.append(child)
-    return None
+    return Node("FAILED", cost=math.inf)
 
 
 """
@@ -54,8 +63,13 @@ ________________________
 """
 
 
-def bfs(problem, func):
-    """Best first (graph) search"""
+def bfs(problem: Problem, func: Callable) -> Node:
+    """
+    Best First Search algorithm implementation.
+    :param problem: Problem to solve.
+    :param func: Evaluation function.
+    :return: Solution node or failed node if no solution is found.
+    """
     init_node = Node(problem.initial)
     frontier = PriorityQueue([init_node], key=func)
     searched_nodes = {hash(problem.initial): init_node}  # {hash(state):node}
@@ -72,12 +86,25 @@ def bfs(problem, func):
     return Node("FAILED", cost=math.inf)
 
 
-def greedy_bfs(problem, heuristic=None):
+def greedy_bfs(problem: Problem, heuristic: Callable = None) -> Node:
+    """
+    Greedy Best First Search algorithm implementation.
+    :param problem: Problem to solve.
+    :param heuristic: Evaluation function.
+    :return: Solution node or failed node if no solution is found.
+    """
     heuristic = heuristic or problem.heuristic
     return bfs(problem, heuristic)
 
 
-def astar(problem, heuristic=None, cost=None):
+def astar(problem: Problem, heuristic: Callable = None, cost: Callable = None):
+    """
+    A* algorithm implementation.
+    :param problem: Problem to solve.
+    :param heuristic:
+    :param cost:
+    :return: Solution node or failed node if no solution is found.
+    """
     heuristic = heuristic or problem.heuristic
     cost = cost or problem.cost
     return bfs(problem, lambda n: heuristic(n) + cost(n))

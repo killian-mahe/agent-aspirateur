@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-from interfaces import State, SimpleProblemSolvingAgentProgram, Node
+from interfaces import State, SimpleProblemSolvingAgentProgram, Node, Problem
 from problem import VacuumProblem, Agent, Thing, Dirt, Jewel, Position
 from algorithms import breadth_first_search, dfs, greedy_bfs, astar
 
@@ -118,6 +118,11 @@ class Environment(State):
         return tuple(sensor_map)
 
     def nearest_dirt(self, agent: Agent) -> Tuple:
+        """
+        Get the nearest dirty room position.
+        :param agent:
+        :return: Position of the nearest dirty room.
+        """
         def distance(t):
             return sqrt(pow(agent.position.x - t.position.x, 2) + pow(agent.position.y - t.position.y, 2))
 
@@ -128,12 +133,24 @@ class Environment(State):
     def percept(self):
         return self
 
-    def set_performance(self, performance, update_screen=False):
+    def set_performance(self, performance: int, update_screen=False):
+        """
+        Set the performance of the agent.
+        :param performance: Performance to set.
+        :param update_screen: Update or not the GUI.
+        :return:
+        """
         self.performance = performance
         if update_screen:
             SCREEN.update_performance(performance)
 
-    def execute_action(self, action, update_screen=False):
+    def execute_action(self, action: str, update_screen=False):
+        """
+        Execute the given action on the environment.
+        :param action: Action to execute.
+        :param update_screen: Update or not the GUI.
+        :return:
+        """
         if not isinstance(action, str):
             raise NotImplementedError
 
@@ -162,18 +179,31 @@ class Environment(State):
         if update_screen:
             SCREEN.move_thing(self.agent)
 
-    def random_location(self):
+    def random_location(self) -> Position:
+        """
+        Generate a random position on the map.
+        :return: Random position.
+        """
         x = randint(0, self.x_max - 1)
         y = randint(0, self.y_max - 1)
         return Position(x, y)
 
-    def generate_dirt(self):
+    def generate_dirt(self) -> Dirt:
+        """
+        Generate dirt at a random position.
+        :return: Generated dirt.
+        """
         position = self.random_location()
         while self.something_at(position, Dirt):
             position = self.random_location()
         return self.add_thing(Dirt(position))
 
-    def add_thing(self, thing):
+    def add_thing(self, thing: Thing):
+        """
+        Add a Thing to the environment.
+        :param thing: Thing to add.
+        :return: Added thing.
+        """
         if issubclass(type(thing), Agent):
             self.agent = thing
             self.agent.position = self.random_location()
@@ -184,13 +214,26 @@ class Environment(State):
             return thing
         raise NotImplementedError
 
-    def delete_thing(self, deleted_thing, update_screen=False):
-        if deleted_thing in self.things:
+    def delete_thing(self, thing_to_delete, update_screen=False):
+        """
+        Delete a thing.
+        :param thing_to_delete:
+        :param update_screen: Update or not the GUI.
+        :return:
+        """
+        if thing_to_delete in self.things:
             if update_screen:
-                SCREEN.delete_thing(deleted_thing)
-            self.things.remove(deleted_thing)
+                SCREEN.delete_thing(thing_to_delete)
+            self.things.remove(thing_to_delete)
 
     def delete_thing_at(self, position, things_class: Thing = Dirt, update_screen=False):
+        """
+        Delete a thing at a specific location.
+        :param position: Position where to delete the specified classes.
+        :param things_class: Classes to delete.
+        :param update_screen: Update or not the GUI.
+        :return:
+        """
         if not isinstance(things_class, list):
             things_class = [things_class]
         for thing_class in things_class:
@@ -199,20 +242,15 @@ class Environment(State):
                 self.delete_thing(things[0], update_screen)
                 yield thing_class
 
-    def generate_jewel(self):
+    def generate_jewel(self) -> Jewel:
+        """
+        Generate a jewel at a random position.
+        :return: Generated jewel.
+        """
         position = self.random_location()
         while self.something_at(position, Jewel):
             position = self.random_location()
         return self.add_thing(Jewel(position))
-
-
-class Sensor:
-
-    def __init__(self, environment):
-        self.environment = environment
-
-    def get_percept(self):
-        return self.environment.percept()
 
 
 class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
@@ -223,23 +261,40 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         self.alive = True
         self.performance = 0
 
-    def can_grab(self, thing):
-        if isinstance(thing, (Dirt, Jewel)):
-            return True
-        return False
-
-    def update_state(self, state, percept):
+    def update_state(self, state: State, percept) -> State:
+        """
+        Update the state in the agent memory with what the agent can perceive.
+        :param state: State of the environment in the agent memory.
+        :param percept: Percept.
+        :return: New state in the agent memory.
+        """
         return deepcopy(percept)
 
-    def formulate_goal(self, state):
+    def formulate_goal(self, state: State) -> any:
+        """
+        Formulate the goal of the agent.
+        :param state: Environment state in agent memory.
+        :return: Goal.
+        """
         goal = deepcopy(state)
         return goal.map()[0]
 
-    def formulate_problem(self, state, goal):
+    def formulate_problem(self, state: State, goal) -> any:
+        """
+        Formulate the problem.
+        :param state: Environment state in agent memory.
+        :param goal: Goal.
+        :return: Formulated problem.
+        """
         problem = VacuumProblem(state, goal)
         return problem
 
-    def search(self, problem):
+    def search(self, problem: Problem) -> List[str]:
+        """
+        Search for a solution to the given problem.
+        :param problem: Given problem.
+        :return: A sequence of actions.
+        """
         print("Searching for a solution")
         final_node = astar(problem)
         seq = Node.action_sequence(final_node)
