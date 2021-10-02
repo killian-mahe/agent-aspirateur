@@ -112,7 +112,8 @@ class Environment(State):
         """
         sensor_map = []
         for thing in self.things:
-            sensor_map.append((thing.position.to_tuple(), "Dirt" if isinstance(thing, Dirt) else "Jewel"))
+            sensor_map.append((thing.position.to_tuple(),
+                              "Dirt" if isinstance(thing, Dirt) else "Jewel"))
         if self.agent:
             return tuple([self.agent.position.to_tuple()] + sensor_map)
         return tuple(sensor_map)
@@ -134,6 +135,9 @@ class Environment(State):
             SCREEN.update_performance(performance)
 
     def execute_action(self, action, update_screen=False):
+        """
+        Action execution
+        """
         if not isinstance(action, str):
             raise NotImplementedError
 
@@ -150,11 +154,13 @@ class Environment(State):
             self.agent.position.y += 1
             self.set_performance(self.performance - 1, update_screen)
         elif action == "Grab":
-            deleted_things = self.delete_thing_at(self.agent.position, Jewel, update_screen)
+            deleted_things = self.delete_thing_at(
+                self.agent.position, Jewel, update_screen)
             if Jewel in deleted_things:
                 self.set_performance(self.performance + 10, update_screen)
         elif action == "Suck":
-            deleted_things = self.delete_thing_at(self.agent.position, [Dirt, Jewel], update_screen)
+            deleted_things = self.delete_thing_at(
+                self.agent.position, [Dirt, Jewel], update_screen)
             if Dirt in deleted_things:
                 self.set_performance(self.performance + 5, update_screen)
             if Jewel in deleted_things:
@@ -163,11 +169,17 @@ class Environment(State):
             SCREEN.move_thing(self.agent)
 
     def random_location(self):
+        """
+        Set a random location
+        """
         x = randint(0, self.x_max - 1)
         y = randint(0, self.y_max - 1)
         return Position(x, y)
 
     def generate_dirt(self):
+        """
+        Dirt Generation
+        """
         position = self.random_location()
         while self.something_at(position, Dirt):
             position = self.random_location()
@@ -200,6 +212,9 @@ class Environment(State):
                 yield thing_class
 
     def generate_jewel(self):
+        """
+        Jewel Generation
+        """
         position = self.random_location()
         while self.something_at(position, Jewel):
             position = self.random_location()
