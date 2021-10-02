@@ -259,7 +259,6 @@ class VacuumAgent(Agent, SimpleProblemSolvingAgentProgram):
         Thing.__init__(self)
         SimpleProblemSolvingAgentProgram.__init__(self)
         self.alive = True
-        self.performance = 0
 
     def update_state(self, state: State, percept) -> State:
         """
